@@ -273,12 +273,32 @@ std::vector<Output> ctc_beam_search_decoder(
     double cutoff_prob,
     size_t cutoff_top_n,
     std::shared_ptr<Scorer> ext_scorer,
-    std::unordered_map<std::string, float> hot_words,
+    const char* hot_words,
     size_t num_results)
 {
   VALID_CHECK_EQ(alphabet.GetSize()+1, class_dim, "Number of output classes in acoustic model does not match number of labels in the alphabet file. Alphabet file must be the same one that was used to train the acoustic model.");
   DecoderState state;
-  state.init(alphabet, beam_size, cutoff_prob, cutoff_top_n, ext_scorer, hot_words);
+  std::unordered_map<std::string, float> hw;
+  std::string word;
+  std::string boost;
+  float fboost;
+
+  const std::string str = hot_words;
+  if (str.size() != 0) {
+    std::stringstream ss(str);
+
+    while (ss.good()) {
+        std::string substr;
+        getline(ss, substr, ',');
+        std::stringstream sss(substr);
+
+        getline(sss, word, ':');
+        getline(sss, boost, ':');
+        fboost = stof(boost);
+        hw[word] = fboost;
+    }
+  }
+  state.init(alphabet, beam_size, cutoff_prob, cutoff_top_n, ext_scorer, hw);
   state.next(probs, time_dim, class_dim);
   return state.decode(num_results);
 }
@@ -297,7 +317,7 @@ ctc_beam_search_decoder_batch(
     double cutoff_prob,
     size_t cutoff_top_n,
     std::shared_ptr<Scorer> ext_scorer,
-    std::unordered_map<std::string, float> hot_words,
+    const char* hot_words,
     size_t num_results)
 {
   VALID_CHECK_GT(num_processes, 0, "num_processes must be nonnegative!");
@@ -328,3 +348,4 @@ ctc_beam_search_decoder_batch(
   }
   return batch_results;
 }
+

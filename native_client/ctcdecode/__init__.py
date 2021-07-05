@@ -145,7 +145,7 @@ def ctc_beam_search_decoder(probs_seq,
                             cutoff_prob=1.0,
                             cutoff_top_n=40,
                             scorer=None,
-                            hot_words=dict(),
+                            hot_words=None,
                             num_results=1):
     """Wrapper for the CTC Beam Search Decoder.
 
@@ -174,10 +174,12 @@ def ctc_beam_search_decoder(probs_seq,
              results, in descending order of the confidence.
     :rtype: list
     """
+    print("beam_results", hot_words.encode(), num_results, beam_size)
     beam_results = swigwrapper.ctc_beam_search_decoder(
         probs_seq, alphabet, beam_size, cutoff_prob, cutoff_top_n,
-        scorer, hot_words, num_results)
+        scorer, hot_words.encode(), num_results)
     beam_results = [(res.confidence, alphabet.Decode(res.tokens)) for res in beam_results]
+    print("After decodeing: ", beam_results)
     return beam_results
 
 
@@ -189,7 +191,7 @@ def ctc_beam_search_decoder_batch(probs_seq,
                                   cutoff_prob=1.0,
                                   cutoff_top_n=40,
                                   scorer=None,
-                                  hot_words=dict(),
+                                  hot_words=None,
                                   num_results=1):
     """Wrapper for the batched CTC beam search decoder.
 
@@ -228,3 +230,4 @@ def ctc_beam_search_decoder_batch(probs_seq,
         for beam_results in batch_beam_results
     ]
     return batch_beam_results
+
